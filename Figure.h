@@ -1,34 +1,36 @@
 #pragma once
 #include <fstream>
+#include <iostream>
+#include <string>
+#include <array>
+#include <map>
 #include "vector"
 using namespace std;
 
 class Figure
 {
 public:
-	Figure();
+	void OpenFile();
+	float GetTime();
 	
 private:
 	class Stick {
 	public:
-		Stick(int coords[4]);
-		double GetTime();
-		void SetNext(Stick* next);
-		void SetPrev(Stick* prev);
-		Stick* GetNext();
-		Stick* GetPrev();
+		Stick(array<int, 2> coords1, array<int, 2> coords2, float time);
+		void AddCommon(array<int, 2> arr, shared_ptr<Stick> stick);
 
 	private:
-		double time;
-		int coords[4];
-		Stick* next;
-		Stick* prev;
+		float time = 0;
+		array<int, 2> coords1 = {};
+		array<int, 2> coords2 = {};
+		map<array<int, 2>, shared_ptr<Stick>> commonsMap;
 	};
 
-	vector<Stick*> arr;
+	float maxTime = 0;
+	shared_ptr<Stick> stickMaxTime;
 
-	void OpenFile();
-	void ReadFile(ofstream fout);
-	void FillFigure(string str);	
+	vector<shared_ptr<Stick>> stickArr;
+	vector<array<int, 2>> coordsArr;
+
+	void HandleFile();
 };
-
