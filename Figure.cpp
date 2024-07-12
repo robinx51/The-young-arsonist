@@ -17,7 +17,7 @@ void Figure::OpenFile()
 void Figure::HandleFile()
 {
 	ifstream fin;
-	fin.open("Files/f.in.txt");
+	fin.open("Code/Files/f.in.txt");
 	if (!fin.is_open())
 		throw "Ошибка чтения файла!";
 	else {
