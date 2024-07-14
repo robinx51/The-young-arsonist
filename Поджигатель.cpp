@@ -8,6 +8,7 @@ int main()
     Figure figure;
     try {
         figure.OpenFile();
+        figure.Print();
     } catch (const char* error_message) {
         cout << error_message << std::endl;
     }
