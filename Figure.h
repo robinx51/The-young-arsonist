@@ -4,6 +4,7 @@
 #include <string>
 #include <array>
 #include <map>
+#include <deque>
 #include "vector"
 using namespace std;
 
@@ -13,7 +14,7 @@ public:
 	void OpenFile();
 	void Print();
 	void PrintMatrix();
-	float GetTime();
+	void GetTime();
 	
 private:
 	class Stick {
@@ -22,9 +23,11 @@ private:
 
 		void Print();
 
+		void SetStatus(int status) noexcept;
+
 		int GetNum() const noexcept;
 		float GetTime() const noexcept;
-		string GetStatus();
+		int GetStatus() const noexcept;
 		
 		array<int, 2> GetCoords1() noexcept;
 		array<int, 2> GetCoords2() noexcept;
@@ -32,7 +35,7 @@ private:
 	private:
 		int num;
 		float time = 0;
-		string status;
+		int status;
 
 		array<int, 2> coords1 = {};
 		array<int, 2> coords2 = {};
@@ -50,6 +53,7 @@ private:
 	void HandleFile();
 	void InitNatrix();
 	void FillMatrix();
+	void BurnedStick(vector <shared_ptr<Stick>>& currentSticks, deque<shared_ptr<Figure::Stick>>& history, shared_ptr<Stick> stick, array<int, 2> coords, array<int, 2>& coordsMin);
 
 	int GetNumCoord(array<int, 2> stick);
 	shared_ptr<Stick> GetStick(int num);

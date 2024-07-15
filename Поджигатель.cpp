@@ -10,7 +10,10 @@ int main()
         figure.OpenFile();
         figure.Print();
         figure.PrintMatrix();
-    } catch (const char* error_message) {
-        cout << error_message << std::endl;
+        figure.GetTime();
+    } catch (const char* message) {
+        cout << message << endl;
+    } catch (string message) {
+        cout << message << endl;
     }
 }

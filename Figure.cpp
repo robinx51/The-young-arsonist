@@ -9,6 +9,7 @@ static bool valueExist(const vector<array<int, 2>>& data, array<int, 2> value) {
 		return true;
 }
 
+
 void Figure::OpenFile()
 {
 	HandleFile();
@@ -44,10 +45,101 @@ void Figure::PrintMatrix()
 	cout << endl;
 }
 
-float Figure::GetTime()
+void Figure::GetTime()
 {
+	float totalTime = 0.0f;
+	deque<shared_ptr<Stick>> history;
+	vector <shared_ptr<Stick>> currentSticks;
 
-	return 0.0f;
+	array<int, 2> coordsMax = stickMaxTime.get()->GetCoords1();
+	array<int, 2> coordsMin = stickMaxTime.get()->GetCoords1();
+	shared_ptr<Stick> stickMaxTime;
+	float localMaxTime = 0;
+	
+	// ƒобавление спичек, загор€щихс€ в данной точке
+	for (vector<shared_ptr<Stick>> item : matrix) {
+		shared_ptr <Stick> stick = item.at(GetNumCoord(coordsMax));
+		if (stick != nullptr && stick.get()->GetStatus() != 3)
+			currentSticks.push_back(item.at(GetNumCoord(coordsMax)));
+	}
+
+	while (true) {
+		if (currentSticks.size() == 2) {
+			/*vector<array<int, 2>> newCoords;
+			for (shared_ptr <Stick> stick : currentSticks) {
+				switch (stick.get()->GetStatus()) {
+				case 3: {
+					BurnedStick(currentSticks, history, stick, stick.get()->GetCoords2(), coordsMin);
+					break;
+				} case 4: {
+					BurnedStick(currentSticks, history, stick, stick.get()->GetCoords1(), coordsMin);
+					break;
+				} default: {
+					break;
+				}
+				}
+			}*/
+
+			float localMinTime = 1000;
+			shared_ptr<Stick> stickMinTime;
+
+			for (shared_ptr<Stick> stick : currentSticks) {
+				if (stick.get()->GetStatus() == 0) {
+					const float localTime = stick.get()->GetTime();
+					/*localMaxTime = localTime > localMaxTime ? localTime : localMaxTime;
+					localMinTime = localTime < localMinTime ? localTime : localMinTime;*/
+					if (localTime > localMaxTime) {
+						localMaxTime = localTime;
+						stickMaxTime = stick;
+					}
+					else {
+						localMinTime = localTime;
+						stickMinTime = stick;
+					}
+					// ”становка флага о подожжении спички
+					//stick.get()->SetStatus(1);
+				}
+			}
+
+			// —пичка с минимальным временем сгорела, а с максимальным начала||продолжила гореть
+			localMaxTime -= localMinTime;
+			totalTime += localMinTime;
+
+			array<int, 2> tempCoords1 = stickMinTime.get()->GetCoords1();
+
+			stickMinTime.get()->SetStatus(coordsMin == tempCoords1 ? 3 : 4);
+
+			BurnedStick(currentSticks, history, stickMinTime, (coordsMin == tempCoords1 ? stickMinTime.get()->GetCoords2() : tempCoords1), coordsMin);
+
+			tempCoords1 = stickMaxTime.get()->GetCoords1();
+			if (localMaxTime == 0) 
+				BurnedStick(currentSticks, history, stickMaxTime, (coordsMin == tempCoords1 ? stickMaxTime.get()->GetCoords2() : tempCoords1), coordsMax);
+			else
+				stickMaxTime.get()->SetStatus(coordsMax == tempCoords1 ? 1 : 2);
+
+		}
+		else if (currentSticks.size() == 1) {
+			if (coordsMin == stickMaxTime.get()->GetCoords1() || coordsMin == stickMaxTime.get()->GetCoords2()) {
+				totalTime += localMaxTime / 2;
+				break;
+			}
+			else {
+				totalTime += localMaxTime;
+				break;
+			}
+		}
+		else if (history.size() == stickArr.size())
+			break;
+		else {
+			stringstream ss;
+			ss << "ѕока не обработано такое количество спичек из одной точки: " << currentSticks.size();
+
+			const string message = ss.str();
+			throw message;
+		}
+
+	}
+	cout << "ћинимальное врем€ горени€ спичек: " << totalTime << endl;
 }
 
 void Figure::HandleFile()
@@ -82,10 +174,6 @@ void Figure::HandleFile()
 						}
 					}
 				}
-				//shared_ptr <array<int, 2>> coords1 = make_shared<array<int, 2>>(); // (coords.at(0), coords.at(1));
-				//coords1.get()->at(0) = coords.at(0); coords1.get()->at(1) = coords.at(1);
-				//shared_ptr <array<int, 2>> coords2 = make_shared<array<int, 2>>();// (coords.at(2), coords.at(3));
-				//coords2.get()->at(0) = coords.at(2); coords2.get()->at(1) = coords.at(3);
 
 				array<int, 2> coords1 = { coords.at(0), coords.at(1) };
 				array<int, 2> coords2 = { coords.at(2), coords.at(3) };
@@ -143,6 +231,21 @@ void Figure::FillMatrix()
 	cout << endl;
 }
 
+void Figure::BurnedStick(vector <shared_ptr<Stick>>& currentSticks, deque<shared_ptr<Figure::Stick>>& history, shared_ptr<Stick> stick, array<int, 2> coords, array<int, 2>& coordsMin)
+{
+	currentSticks.erase(remove(currentSticks.begin(), currentSticks.end(), stick), currentSticks.end());
+	history.push_back(stick);
+	//newCoords.push_back(coords);
+	coordsMin = coords;
+
+	for (vector<shared_ptr<Stick>> item : matrix) {
+		shared_ptr <Stick> TempStick = item.at(GetNumCoord(coords));
+		if (TempStick != nullptr && TempStick.get()->GetStatus() == 0) {
+			currentSticks.push_back(item.at(GetNumCoord(coords)));
+		}
+	}
+}
+
 shared_ptr<Figure::Stick> Figure::GetStick(int num)
 {
 	return stickArr.at(num);
@@ -164,6 +267,7 @@ Figure::Stick::Stick(array<int, 2> coords1, array<int, 2> coords2, float time, i
 	this->coords2 = coords2;
 	this->time = time;
 	this->num = num;
+	status = 0;
 }
 
 void Figure::Stick::Print()
@@ -180,9 +284,14 @@ float Figure::Stick::GetTime() const noexcept
 {
 	return time;
 }
-string Figure::Stick::GetStatus()
+int Figure::Stick::GetStatus() const noexcept
+{					// 0 - спичка цела€; 1 - горит от первой координаты; 2 - горит от второй координаты; 
+	return status;	// 3 - сгорела от первой координаты; 4 - сгорела от второй координаты;
+}
+
+void Figure::Stick::SetStatus(int status) noexcept
 {
-	return status;
+	this->status = status;
 }
 
 array<int, 2> Figure::Stick::GetCoords1() noexcept
