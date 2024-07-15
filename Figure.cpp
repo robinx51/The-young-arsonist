@@ -17,7 +17,7 @@ void Figure::OpenFile()
 void Figure::Print()
 {
 	cout << "Точки: ";
-	for (int i = 0; i < stickArr.size(); i++) {
+	for (int i = 0; i < coordsArr.size(); i++) {
 		cout << coordsArr.at(i).at(0) << coordsArr.at(i).at(1) << " ";
 	}
 	cout << endl << endl << "Спички:" << endl;
