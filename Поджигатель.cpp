@@ -9,6 +9,7 @@ int main()
     try {
         figure.OpenFile();
         figure.Print();
+        figure.PrintMatrix();
     } catch (const char* error_message) {
         cout << error_message << std::endl;
     }

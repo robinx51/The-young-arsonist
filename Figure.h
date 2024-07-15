@@ -12,34 +12,45 @@ class Figure
 public:
 	void OpenFile();
 	void Print();
+	void PrintMatrix();
 	float GetTime();
 	
 private:
 	class Stick {
 	public:
-		Stick(array<int, 2> coords1, array<int, 2> coords2, float time, short num);
-		//void AddCommon(array<int, 2> arr, shared_ptr<Stick> stick);
-		//map<array<int, 2>, shared_ptr<Stick>> GetCommons();
+		Stick(array<int, 2> coords1, array<int, 2> coords2, float time, int num) noexcept;
+
 		void Print();
-		short GetNum();
+
+		int GetNum() const noexcept;
+		float GetTime() const noexcept;
+		string GetStatus();
+		
+		array<int, 2> GetCoords1() noexcept;
+		array<int, 2> GetCoords2() noexcept;
 
 	private:
-		short num;
+		int num;
 		float time = 0;
+		string status;
+
 		array<int, 2> coords1 = {};
 		array<int, 2> coords2 = {};
-		//map<array<int, 2>, shared_ptr<Stick>> commonsMap;
 	};
 
 	float maxTime = 0;
 	shared_ptr<Stick> stickMaxTime;
 
 	vector<vector<shared_ptr<Stick>>> matrix;
+	vector<vector<int>> matrixInt;
 
 	vector<shared_ptr<Stick>> stickArr;
 	vector<array<int, 2>> coordsArr;
 
 	void HandleFile();
-	void FillMatrix();
 	void InitNatrix();
+	void FillMatrix();
+
+	int GetNumCoord(array<int, 2> stick);
+	shared_ptr<Stick> GetStick(int num);
 };
