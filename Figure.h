@@ -24,13 +24,19 @@ private:
 		void Print();
 
 		void SetStatus(int status) noexcept;
+		void SetFire(array<int, 2> coords);
+		void SetBurned() noexcept;
+		void SetBurned(array<int, 2> coords);
+
 
 		int GetNum() const noexcept;
 		float GetTime() const noexcept;
 		int GetStatus() const noexcept;
-		
+
 		array<int, 2> GetCoords1() noexcept;
 		array<int, 2> GetCoords2() noexcept;
+		array<int, 2> GetOtherCoords(array<int, 2> coords);
+		array<int, 2> GetBurnedCoords() noexcept;
 
 	private:
 		int num;
@@ -41,9 +47,6 @@ private:
 		array<int, 2> coords2 = {};
 	};
 
-	float maxTime = 0;
-	shared_ptr<Stick> stickMaxTime;
-
 	vector<vector<shared_ptr<Stick>>> matrix;
 	vector<vector<int>> matrixInt;
 
@@ -51,9 +54,10 @@ private:
 	vector<array<int, 2>> coordsArr;
 
 	void HandleFile();
+	void PrintResult(float time, array<int, 2> coords);
 	void InitNatrix();
 	void FillMatrix();
-	void BurnedStick(vector <shared_ptr<Stick>>& currentSticks, deque<shared_ptr<Figure::Stick>>& history, shared_ptr<Stick> stick, array<int, 2> coords, array<int, 2>& coordsMin);
+	void BurnedStick(map <shared_ptr<Stick>, float>& currentSticks, deque<shared_ptr<Figure::Stick>>& history, shared_ptr<Stick> stick);
 
 	int GetNumCoord(array<int, 2> stick);
 	shared_ptr<Stick> GetStick(int num);
