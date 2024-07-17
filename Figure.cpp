@@ -18,27 +18,27 @@ void Figure::OpenFile()
 // Вывод в консоль данных после чтения файла (для отладки)
 void Figure::Print()
 {
-	cout << "Точки: ";
+	std::cout << "Точки: ";
 	for (int i = 0; i < coordsArr.size(); i++) {
-		cout << coordsArr.at(i).at(0) << coordsArr.at(i).at(1) << " ";
+		std::cout << coordsArr.at(i).at(0) << coordsArr.at(i).at(1) << " ";
 	}
-	cout << endl << endl << "Спички:" << endl;
+	std::cout << endl << endl << "Спички:" << endl;
 	for (int i = 0; i < stickArr.size(); i++) {
 		stickArr.at(i).get()->Print();
 	}
-	cout << endl << "Матрица смежности:" << endl << "\t";
+	std::cout << endl << "Матрица смежности:" << endl << "\t";
 	for (int i = 0; i < coordsArr.size(); i++) {
-		cout << coordsArr.at(i).at(0) << coordsArr.at(i).at(1) << "\t";
+		std::cout << coordsArr.at(i).at(0) << coordsArr.at(i).at(1) << "\t";
 	}
-	cout << endl;
+	std::cout << endl;
 	for (int i = 0; i < matrixInt.size(); i++) {
-		cout << coordsArr.at(i).at(0) << coordsArr.at(i).at(1) << "\t";
+		std::cout << coordsArr.at(i).at(0) << coordsArr.at(i).at(1) << "\t";
 		for (int j = 0; j < matrixInt.size(); j++) {
-			cout << matrixInt.at(i).at(j) << "\t";
+			std::cout << matrixInt.at(i).at(j) << "\t";
 		}
-		cout << endl;
+		std::cout << endl;
 	}
-	cout << endl;
+	std::cout << endl;
 }
 void Figure::GetTime()
 {
@@ -57,7 +57,7 @@ void Figure::HandleFile()
 		getline(fin, line);
 		const int amount = stoi(line);
 		if (amount >= 1 && amount <= 40) {
-			cout << "Количество спичек: " << amount << endl;
+			std::cout << "Количество спичек: " << amount << endl;
 			for (short num = 1; num <= amount; num++) {
 				getline(fin, line);
 				array<int, 4> coords = {};
@@ -117,7 +117,7 @@ void Figure::PrintResult(float time, array<int, 2> coords)
 	if (!fin.is_open())
 		throw "Ошибка чтения файла!";
 	else {
-		cout << endl << "Содержимое файла f.out.txt:" << endl;
+		std::cout << endl << "Содержимое файла f.out.txt:" << endl;
 		string line;
 		while (getline(fin, line)) {
 			std::cout << line << std::endl;
@@ -152,7 +152,7 @@ void Figure::FillMatrix()
 		matrix.at(num1).at(num2) = tempStick;
 		matrix.at(num2).at(num1) = tempStick;
 	}
-	cout << endl;
+	std::cout << endl;
 }
 
 // Вычисление минимального времени горения спичек
@@ -163,14 +163,17 @@ void Figure::CalculateTime()
 	for (const array<int, 2> coordsStart : coordsArr) {
 		float totalTime = 0.0f;
 
-		int coutBurnedSticks = 0;
+		int countBurnedSticks = 0;
 		map <shared_ptr<Stick>, float> currentSticks;
+		map <int, int> newStatuses;
 
 		// Поджигаем первую точку
-		FireCoord(coordsStart, currentSticks);
+		FireCoord(coordsStart, currentSticks, newStatuses);
+		//FireCoord(coordsStart, currentSticks);
 
 		while (true) {
-			if (coutBurnedSticks != stickArr.size()) {
+			ApplyNewStatuses(currentSticks, newStatuses);
+			if (countBurnedSticks != stickArr.size()) {
 				float localMinTime = std::numeric_limits<int>::max();
 
 				for (const auto& pair : currentSticks) {
@@ -195,7 +198,8 @@ void Figure::CalculateTime()
 						tempCurrentSticks[pair.first] -= localMinTime;
 					}
 					if (pair.second == 0) {
-						BurnedStick(currentSticks, coutBurnedSticks, pair.first);
+						//BurnedStick(currentSticks, countBurnedSticks, pair.first);
+						BurnedStick(currentSticks, newStatuses, countBurnedSticks, pair.first);
 					}
 				}
 			}
@@ -205,46 +209,82 @@ void Figure::CalculateTime()
 			minimalTime = totalTime;
 			minimalCoords = coordsStart;
 		}
-		// Обнуление флагов спичек перед следующей итерацией
+		// Обнуление флагов спичек перед следующей итерацией другой координаты
 		for (shared_ptr<Stick> stick : stickArr)
 			stick.get()->SetStatus(0);
 	}
 
-	cout << "Минимальное время горения спичек: " << minimalTime << endl;
-	cout << "Координаты: " << minimalCoords.at(0) << " " << minimalCoords.at(1) << endl;
+	std::cout << "Минимальное время горения спичек: " << minimalTime << endl;
+	std::cout << "Координаты: " << minimalCoords.at(0) << " " << minimalCoords.at(1) << endl;
 	PrintResult(minimalTime, minimalCoords);
 }
 
+//void Figure::BurnedStick(map<shared_ptr<Stick>,float>& currentSticks, int& burnedSticks, shared_ptr<Stick> stick)
+//{
+//	const array<int, 2> coords = stick.get()->GetBurnedCoords();
+//
+//	stick.get()->SetBurned();
+//	currentSticks.erase(stick);
+//	burnedSticks++;
+//
+//	FireCoord(coords, currentSticks);
+//}
+//void Figure::FireCoord(array<int, 2> coords, map<shared_ptr<Stick>, float>& currentSticks)
+//{
+//	for (vector<shared_ptr<Stick>> item : matrix) {
+//		shared_ptr <Stick> tempStick = item.at(GetNumCoord(coords));
+//		if (tempStick != nullptr) {
+//			if (tempStick.get()->GetStatus() == 0) {
+//				currentSticks[tempStick] = tempStick.get()->GetTime();
+//				tempStick.get()->SetFire(coords);
+//			}
+//			else if ((coords == tempStick.get()->GetCoords1() && tempStick.get()->GetStatus() == 2)
+//				|| (coords == tempStick.get()->GetCoords2() && tempStick.get()->GetStatus() == 1))
+//			{
+//				tempStick.get()->SetStatus(5);
+//			}
+//		}
+//	}
+//}
+
 // Обработка данных после сгоревшей спички
-void Figure::BurnedStick(map<shared_ptr<Stick>,float>& currentSticks, int& burnedSticks, shared_ptr<Stick> stick)
-{
+void Figure::BurnedStick(map<shared_ptr<Stick>, float>& currentSticks, map<int, int>& newStatuses, int& burnedSticks, shared_ptr<Stick> stick) {
 	const array<int, 2> coords = stick.get()->GetBurnedCoords();
 
 	stick.get()->SetBurned();
+	newStatuses.erase(stick.get()->GetNum());
 	currentSticks.erase(stick);
 	burnedSticks++;
 
-	FireCoord(coords, currentSticks);
+	FireCoord(coords, currentSticks, newStatuses);
 }
-
 // Поджигание спичек, загорящихся в данной точке
-void Figure::FireCoord(array<int, 2> coords, map<shared_ptr<Stick>, float>& currentSticks)
-{
-	for (vector<shared_ptr<Stick>> item : matrix) {
-		shared_ptr <Stick> tempStick = item.at(GetNumCoord(coords));
+void Figure::FireCoord(array<int, 2> coords, map <shared_ptr<Stick>, float>& currentSticks, map <int, int>& newStatuses) {
+	for (const auto& pair : matrix) {
+		shared_ptr <Stick> tempStick = pair.at(GetNumCoord(coords));
 		if (tempStick != nullptr) {
 			if (tempStick.get()->GetStatus() == 0) {
-				currentSticks[tempStick] = tempStick.get()->GetTime();
-				tempStick.get()->SetFire(coords);
+				currentSticks[tempStick] = tempStick.get()->GetTime();						// Добавление новой горящей спички
+				newStatuses[tempStick.get()->GetNum()] = tempStick.get()->GetFire(coords);	// Добавление статуса той же спички
+				tempStick.get()->SetFire(coords);											// Установка статуса для самой спички
 			}
 			else if ((coords == tempStick.get()->GetCoords1() && tempStick.get()->GetStatus() == 2)
 				|| (coords == tempStick.get()->GetCoords2() && tempStick.get()->GetStatus() == 1))
 			{
-				tempStick.get()->SetStatus(5);
+				newStatuses[tempStick.get()->GetNum()] = 5;									// Подожжение со второй стороны(обновится с новым циклом подсчёта)
 			}
 		}
 	}
 }
+
+void Figure::ApplyNewStatuses(map<shared_ptr<Stick>, float>& currentSticks, map<int, int>& newStatuses)
+{
+	for (const auto& pair : currentSticks) {
+		pair.first.get()->SetStatus(newStatuses[pair.first.get()->GetNum()]);
+	}
+}
+
+
 
 // Получение спички по индексу в массиве всех спичек
 shared_ptr<Figure::Stick> Figure::GetStick(int num)
@@ -277,8 +317,8 @@ Figure::Stick::Stick(array<int, 2> coords1, array<int, 2> coords2, float time, i
 // Вывод в консоль данных спички
 void Figure::Stick::Print()
 {
-	cout << num << ": " << coords1.at(0) << coords1.at(1) << " ";
-	cout << coords2.at(0) << coords2.at(1) << " " << time << endl;
+	std::cout << num << ": " << coords1.at(0) << coords1.at(1) << " ";
+	std::cout << coords2.at(0) << coords2.at(1) << " " << time << endl;
 }
 
 int Figure::Stick::GetNum() const noexcept
@@ -312,6 +352,12 @@ void Figure::Stick::SetStatus(int status) noexcept
 void Figure::Stick::SetFire(array<int, 2> coords)
 {
 	this->SetStatus(coords == this->GetCoords1() ? 1 : 2);
+}
+
+// Получение флага подожжения спички
+int Figure::Stick::GetFire(array<int, 2> coords)
+{
+	return coords == this->GetCoords1() ? 1 : 2;
 }
 
 // Установка флага сгорания спички

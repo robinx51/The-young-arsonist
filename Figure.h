@@ -24,6 +24,7 @@ private:
 
 		void SetStatus(int status) noexcept;
 		void SetFire(array<int, 2> coords);
+		int GetFire(array<int, 2> coords);
 		void SetBurned() noexcept;
 
 
@@ -58,8 +59,12 @@ private:
 	void InitNatrix();
 	void FillMatrix();
 	void CalculateTime();
-	void BurnedStick(map <shared_ptr<Stick>, float>& currentSticks, int& burnedSticks, shared_ptr<Stick> stick);
-	void FireCoord(array<int, 2> coords, map <shared_ptr<Stick>, float>& currentSticks);
+	//void BurnedStick(map <shared_ptr<Stick>, float>& currentSticks, int& burnedSticks, shared_ptr<Stick> stick);
+	//void FireCoord(array<int, 2> coords, map <shared_ptr<Stick>, float>& currentSticks);
+
+	void BurnedStick(map <shared_ptr<Stick>, float>& currentSticks, map <int, int>& newStatuses, int& burnedSticks, shared_ptr<Stick> stick);
+	void FireCoord(array<int, 2> coords, map <shared_ptr<Stick>, float>& currentSticks, map <int, int>& newStatuses);
+	void ApplyNewStatuses(map <shared_ptr<Stick>, float>& currentSticks, map <int, int>& newStatuses);
 
 	int GetNumCoord(array<int, 2> stick);
 	shared_ptr<Stick> GetStick(int num);
