@@ -9,7 +9,6 @@ int main()
     try {
         figure.OpenFile();
         figure.Print();
-        figure.PrintMatrix();
         figure.GetTime();
     } catch (const char* message) {
         cout << message << endl;

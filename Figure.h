@@ -13,7 +13,6 @@ class Figure
 public:
 	void OpenFile();
 	void Print();
-	void PrintMatrix();
 	void GetTime();
 	
 private:
@@ -26,7 +25,6 @@ private:
 		void SetStatus(int status) noexcept;
 		void SetFire(array<int, 2> coords);
 		void SetBurned() noexcept;
-		void SetBurned(array<int, 2> coords);
 
 
 		int GetNum() const noexcept;
@@ -35,7 +33,6 @@ private:
 
 		array<int, 2> GetCoords1() noexcept;
 		array<int, 2> GetCoords2() noexcept;
-		array<int, 2> GetOtherCoords(array<int, 2> coords);
 		array<int, 2> GetBurnedCoords() noexcept;
 
 	private:
@@ -47,6 +44,9 @@ private:
 		array<int, 2> coords2 = {};
 	};
 
+	const string inDirectory = "Code/Files/f.in.txt";
+	const string outDirectory = "Code/Files/f.out.txt";
+
 	vector<vector<shared_ptr<Stick>>> matrix;
 	vector<vector<int>> matrixInt;
 
@@ -57,6 +57,7 @@ private:
 	void PrintResult(float time, array<int, 2> coords);
 	void InitNatrix();
 	void FillMatrix();
+	void CalculateTime();
 	void BurnedStick(map <shared_ptr<Stick>, float>& currentSticks, deque<shared_ptr<Figure::Stick>>& history, shared_ptr<Stick> stick);
 
 	int GetNumCoord(array<int, 2> stick);

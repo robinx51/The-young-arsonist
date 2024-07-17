@@ -15,7 +15,7 @@ void Figure::OpenFile()
 {
 	HandleFile();
 }
-
+// Вывод в консоль данных после чтения файла (для отладки)
 void Figure::Print()
 {
 	cout << "Точки: ";
@@ -26,11 +26,6 @@ void Figure::Print()
 	for (int i = 0; i < stickArr.size(); i++) {
 		stickArr.at(i).get()->Print();
 	}
-	//cout << endl << "Спичка с максимальным временем горения (" << maxTime << "): " << stickMaxTime.get()->GetNum() << endl;
-
-}
-void Figure::PrintMatrix()
-{
 	cout << endl << "Матрица смежности:" << endl << "\t";
 	for (int i = 0; i < coordsArr.size(); i++) {
 		cout << coordsArr.at(i).at(0) << coordsArr.at(i).at(1) << "\t";
@@ -45,13 +40,129 @@ void Figure::PrintMatrix()
 	}
 	cout << endl;
 }
-
 void Figure::GetTime()
+{
+	CalculateTime();
+}
+
+// Считывание и обработка входных данных из файла f.in.txt
+void Figure::HandleFile()
+{
+	ifstream fin;
+	fin.open(inDirectory);
+	if (!fin.is_open())
+		throw "Ошибка чтения файла!";
+	else {
+		string line;
+		getline(fin, line);
+		const int amount = stoi(line);
+		if (amount >= 1 && amount <= 40) {
+			cout << "Количество спичек: " << amount << endl;
+			for (short num = 1; num <= amount; num++) {
+				getline(fin, line);
+				array<int, 4> coords = {};
+				float time;
+
+				// Считывание данных из файла
+				{
+					stringstream ss(line);
+					string word;
+					for (int i = 0; i <= 4; i++) {
+						// Чтение символов до следующего пробела
+						ss >> word;
+						if (i == 4) {
+							time = stof(word);
+						}
+						else {
+							coords.at(i) = stoi(word);
+						}
+					}
+				}
+
+				array<int, 2> coords1 = { coords.at(0), coords.at(1) };
+				array<int, 2> coords2 = { coords.at(2), coords.at(3) };
+
+				// Заполнение вектора координат уникальными значениями
+				if (!valueExist(coordsArr, coords1))
+					coordsArr.push_back(coords1); 
+				if (!valueExist(coordsArr, coords2))
+					coordsArr.push_back(coords2);
+
+				// Заполнение вектора, содержащего указатели на спички
+				stickArr.push_back(make_shared<Stick>(coords1, coords2, time, num));
+			}
+			FillMatrix();
+		}
+		else
+			throw "Недопустимое количество спичек!";
+	}
+	fin.close();
+}
+
+// Запись результата вычислений в файл f.out.txt и выврд его содержимого в консоль
+void Figure::PrintResult(float time, array<int, 2> coords)
+{
+	std::ofstream out;
+	out.open(outDirectory);
+	if (out.is_open())
+	{
+		out << coords.at(0) << " " << coords.at(1) << std::endl;
+		out << std::fixed << std::setprecision(2) << time << std::endl;
+		std::cout << "Результаты были записаны в файл" << std::endl;
+	}
+	out.close();
+
+	ifstream fin;
+	fin.open("Code/Files/f.out.txt");
+	if (!fin.is_open())
+		throw "Ошибка чтения файла!";
+	else {
+		cout << endl << "Содержимое файла f.out.txt:" << endl;
+		string line;
+		while (getline(fin, line)) {
+			std::cout << line << std::endl;
+		}
+	}
+}
+
+// Заполнение матриц смежности пустыми значениями
+void Figure::InitNatrix()
+{
+	const size_t size = coordsArr.size();
+	for (int i = 0; i < size; i++) {
+		matrixInt.push_back(vector<int>(size));
+		matrix.push_back(vector<shared_ptr<Stick>>(size));
+	}
+}
+// Заполнение матриц смежности: числовую номерами спичек, обычную - указателями на спички
+void Figure::FillMatrix()
+{
+	InitNatrix();
+	for (int stick = 0; stick < stickArr.size(); stick++) {
+		shared_ptr<Stick> tempStick = GetStick(stick);
+		// Получение номера соординат для поиска в векторе координат
+		const int num1 = GetNumCoord(tempStick.get()->GetCoords1() );
+		const int num2 = GetNumCoord(tempStick.get()->GetCoords2() );
+
+		// Заполнение матрицы смежности номерами спичек
+		matrixInt.at(num1).at(num2) = tempStick.get()->GetNum();
+		matrixInt.at(num2).at(num1) = tempStick.get()->GetNum();
+
+		// Заполнение матрицы смежности указателями на спички
+		matrix.at(num1).at(num2) = tempStick;
+		matrix.at(num2).at(num1) = tempStick;
+	}
+	cout << endl;
+}
+
+// Вычисление минимального времени горения спичек
+void Figure::CalculateTime()
 {
 	float minimalTime = std::numeric_limits<float>::max();
 	array<int, 2> minimalCoords;
 	for (const array<int, 2> coordsStart : coordsArr) {
 		float totalTime = 0.0f;
+
 		deque<shared_ptr<Stick>> history;
 		map <shared_ptr<Stick>, float> currentSticks;
 
@@ -107,120 +218,7 @@ void Figure::GetTime()
 	PrintResult(minimalTime, minimalCoords);
 }
 
-void Figure::HandleFile()
-{
-	ifstream fin;
-	fin.open("Code/Files/f.in.txt");
-	if (!fin.is_open())
-		throw "Ошибка чтения файла!";
-	else {
-		string line;
-		getline(fin, line);
-		const int amount = stoi(line);
-		if (amount >= 1 && amount <= 40) {
-			cout << "Количество спичек: " << amount << endl;
-			for (short num = 1; num <= amount; num++) {
-				getline(fin, line);
-				array<int, 4> coords = {};
-				float time;
-
-				// Считывание данных из файла
-				{
-					stringstream ss(line);
-					string word;
-					for (int i = 0; i <= 4; i++) {
-						// Чтение символов до следующего пробела
-						ss >> word;
-						if (i == 4) {
-							time = stof(word);
-						}
-						else {
-							coords.at(i) = stoi(word);
-						}
-					}
-				}
-
-				array<int, 2> coords1 = { coords.at(0), coords.at(1) };
-				array<int, 2> coords2 = { coords.at(2), coords.at(3) };
-
-				// Заполнение вектора, содержащего координаты точек
-				if (!valueExist(coordsArr, coords1))
-					coordsArr.push_back(coords1); 
-				if (!valueExist(coordsArr, coords2))
-					coordsArr.push_back(coords2);
-
-				const shared_ptr<Stick> stick = make_shared<Stick>(coords1, coords2, time, num);
-
-				// Заполнение вектора, содержащего указатели на спички
-				stickArr.push_back(stick);			
-
-				/*if (maxTime < time) {
-					maxTime = time;
-					stickMaxTime = stick;
-				}*/
-
-			}
-			FillMatrix();
-		}
-		else
-			throw "Недопустимое количество спичек!";
-	}
-	fin.close();
-}
-
-void Figure::PrintResult(float time, array<int, 2> coords)
-{
-	std::ofstream out;
-	out.open("Code/Files/f.out.txt");
-	if (out.is_open())
-	{
-		out << coords.at(0) << " " << coords.at(1) << std::endl;
-		out << std::fixed << std::setprecision(2) << time << std::endl;
-		std::cout << "Результаты были записаны в файл" << std::endl;
-	}
-	out.close();
-
-	ifstream fin;
-	fin.open("Code/Files/f.out.txt");
-	if (!fin.is_open())
-		throw "Ошибка чтения файла!";
-	else {
-		cout << endl << "Содержимое файла f.out.txt:" << endl;
-		string line;
-		while (getline(fin, line)) {
-			std::cout << line << std::endl;
-		}
-	}
-}
-
-void Figure::InitNatrix()
-{
-	const size_t size = coordsArr.size();
-	for (int i = 0; i < size; i++) {
-		matrixInt.push_back(vector<int>(size));
-		matrix.push_back(vector<shared_ptr<Stick>>(size));
-	}
-}
-void Figure::FillMatrix()
-{
-	InitNatrix();
-	for (int stick = 0; stick < stickArr.size(); stick++) {
-		shared_ptr<Stick> tempStick = GetStick(stick);
-		// Получение номера соординат для поиска в векторе координат
-		const int num1 = GetNumCoord(tempStick.get()->GetCoords1() );
-		const int num2 = GetNumCoord(tempStick.get()->GetCoords2() );
-
-		// Заполнение матрицы смежности номерами спичек
-		matrixInt.at(num1).at(num2) = tempStick.get()->GetNum();
-		matrixInt.at(num2).at(num1) = tempStick.get()->GetNum();
-
-		// Заполнение матрицы смежности указателями на спички
-		matrix.at(num1).at(num2) = tempStick;
-		matrix.at(num2).at(num1) = tempStick;
-	}
-	cout << endl;
-}
-
+// Обработка данных после сгоревшей спички
 void Figure::BurnedStick(map<shared_ptr<Stick>,float>& currentSticks, deque<shared_ptr<Figure::Stick>>& history, shared_ptr<Stick> stick)
 {
 	const array<int, 2> coords = stick.get()->GetBurnedCoords();
@@ -245,10 +243,13 @@ void Figure::BurnedStick(map<shared_ptr<Stick>,float>& currentSticks, deque<shar
 	}
 }
 
+// Получение спички по индексу в массиве всех спичек
 shared_ptr<Figure::Stick> Figure::GetStick(int num)
 {
 	return stickArr.at(num);
 }
+
+// Получение индекса координатЮ находящихся в массиве всех координат
 int Figure::GetNumCoord(array<int, 2> coords)
 {
 	auto result{ find(begin(coordsArr), end(coordsArr), coords) };
@@ -260,6 +261,7 @@ int Figure::GetNumCoord(array<int, 2> coords)
 
 
 
+// Конструктор объекта спички
 Figure::Stick::Stick(array<int, 2> coords1, array<int, 2> coords2, float time, int num) noexcept
 {
 	this->coords1 = coords1;
@@ -269,6 +271,7 @@ Figure::Stick::Stick(array<int, 2> coords1, array<int, 2> coords2, float time, i
 	status = 0;
 }
 
+// Вывод в консоль данных спички
 void Figure::Stick::Print()
 {
 	cout << num << ": " << coords1.at(0) << coords1.at(1) << " ";
@@ -288,25 +291,6 @@ int Figure::Stick::GetStatus() const noexcept
 	return status;	// 3 - сгорела от первой координаты; 4 - сгорела от второй координаты;
 }
 
-void Figure::Stick::SetStatus(int status) noexcept
-{
-	this->status = status;
-}
-
-void Figure::Stick::SetFire(array<int, 2> coords)
-{
-	this->SetStatus(coords == this->GetCoords1() ? 1 : 2);
-}
-
-void Figure::Stick::SetBurned() noexcept
-{
-	this->SetStatus(this->GetStatus() == 1 ? 3 : 4);
-}
-void Figure::Stick::SetBurned(array<int, 2> coords)
-{
-	this->SetStatus(coords == this->GetCoords1() ? 3 : 4);
-}
-
 array<int, 2> Figure::Stick::GetCoords1() noexcept
 {
 	return coords1;
@@ -316,17 +300,24 @@ array<int, 2> Figure::Stick::GetCoords2() noexcept
 	return coords2;
 }
 
-array<int, 2> Figure::Stick::GetOtherCoords(array<int, 2> coords)
+void Figure::Stick::SetStatus(int status) noexcept
 {
-	if (coords == this->GetCoords1())
-		return this->GetCoords1();
-	else if (coords == this->GetCoords2())
-		return this->GetCoords2();
-	else
-		throw "Получены неверные координаты";
-	//return coords == this->GetCoords1() ? this->GetCoords1() : this->GetCoords2();
+	this->status = status;
 }
 
+// Установка флага подожжения спички
+void Figure::Stick::SetFire(array<int, 2> coords)
+{
+	this->SetStatus(coords == this->GetCoords1() ? 1 : 2);
+}
+
+// Установка флага сгорания спички
+void Figure::Stick::SetBurned() noexcept
+{
+	this->SetStatus(this->GetStatus() == 1 ? 3 : 4);
+}
+
+// Получение координаты точки сгорания спички
 array<int, 2> Figure::Stick::GetBurnedCoords() noexcept
 {
 	return GetStatus() == 1 ? GetCoords2() : GetCoords1();
