@@ -179,6 +179,18 @@ void Figure::PrintResult(float time, array<int, 2> coords)
 		std::cout << "Результаты были записаны в файл" << std::endl;
 	}
 	out.close();
+
+	ifstream fin;
+	fin.open("Code/Files/f.out.txt");
+	if (!fin.is_open())
+		throw "Ошибка чтения файла!";
+	else {
+		cout << endl << "Содержимое файла f.out.txt:" << endl;
+		string line;
+		while (getline(fin, line)) {
+			std::cout << line << std::endl;
+		}
+	}
 }
 
 void Figure::InitNatrix()
