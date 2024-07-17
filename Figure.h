@@ -58,7 +58,8 @@ private:
 	void InitNatrix();
 	void FillMatrix();
 	void CalculateTime();
-	void BurnedStick(map <shared_ptr<Stick>, float>& currentSticks, deque<shared_ptr<Figure::Stick>>& history, shared_ptr<Stick> stick);
+	void BurnedStick(map <shared_ptr<Stick>, float>& currentSticks, int& burnedSticks, shared_ptr<Stick> stick);
+	void FireCoord(array<int, 2> coords, map <shared_ptr<Stick>, float>& currentSticks);
 
 	int GetNumCoord(array<int, 2> stick);
 	shared_ptr<Stick> GetStick(int num);

@@ -163,19 +163,14 @@ void Figure::CalculateTime()
 	for (const array<int, 2> coordsStart : coordsArr) {
 		float totalTime = 0.0f;
 
-		deque<shared_ptr<Stick>> history;
+		int coutBurnedSticks = 0;
 		map <shared_ptr<Stick>, float> currentSticks;
 
-		// Добавление спичек, загорящихся в данной точке
-		for (vector<shared_ptr<Stick>> item : matrix) {
-			shared_ptr<Stick> stick = item.at(GetNumCoord(coordsStart));
-			if (stick != nullptr) {
-				currentSticks[stick] = stick.get()->GetTime();
-				stick.get()->SetFire(coordsStart);
-			}
-		}
+		// Поджигаем первую точку
+		FireCoord(coordsStart, currentSticks);
+
 		while (true) {
-			if (history.size() != stickArr.size()) {
+			if (coutBurnedSticks != stickArr.size()) {
 				float localMinTime = std::numeric_limits<int>::max();
 
 				for (const auto& pair : currentSticks) {
@@ -188,6 +183,7 @@ void Figure::CalculateTime()
 
 				// Спичка(и) с минимальным временем сгорела(и), а остальные начали||продолжили гореть
 				totalTime += localMinTime;
+				// Создание временного словаря для прохода по необновлённым флагам сгоревших спичек
 				map <shared_ptr<Stick>, float> tempCurrentSticks = currentSticks;
 				for (const auto& pair : tempCurrentSticks) {
 					if (pair.first.get()->GetStatus() == 5) {
@@ -199,7 +195,7 @@ void Figure::CalculateTime()
 						tempCurrentSticks[pair.first] -= localMinTime;
 					}
 					if (pair.second == 0) {
-						BurnedStick(currentSticks, history, pair.first);
+						BurnedStick(currentSticks, coutBurnedSticks, pair.first);
 					}
 				}
 			}
@@ -209,6 +205,7 @@ void Figure::CalculateTime()
 			minimalTime = totalTime;
 			minimalCoords = coordsStart;
 		}
+		// Обнуление флагов спичек перед следующей итерацией
 		for (shared_ptr<Stick> stick : stickArr)
 			stick.get()->SetStatus(0);
 	}
@@ -219,14 +216,20 @@ void Figure::CalculateTime()
 }
 
 // Обработка данных после сгоревшей спички
-void Figure::BurnedStick(map<shared_ptr<Stick>,float>& currentSticks, deque<shared_ptr<Figure::Stick>>& history, shared_ptr<Stick> stick)
+void Figure::BurnedStick(map<shared_ptr<Stick>,float>& currentSticks, int& burnedSticks, shared_ptr<Stick> stick)
 {
 	const array<int, 2> coords = stick.get()->GetBurnedCoords();
 
 	stick.get()->SetBurned();
 	currentSticks.erase(stick);
-	history.push_back(stick);
+	burnedSticks++;
 
+	FireCoord(coords, currentSticks);
+}
+
+// Поджигание спичек, загорящихся в данной точке
+void Figure::FireCoord(array<int, 2> coords, map<shared_ptr<Stick>, float>& currentSticks)
+{
 	for (vector<shared_ptr<Stick>> item : matrix) {
 		shared_ptr <Stick> tempStick = item.at(GetNumCoord(coords));
 		if (tempStick != nullptr) {
@@ -234,8 +237,8 @@ void Figure::BurnedStick(map<shared_ptr<Stick>,float>& currentSticks, deque<shar
 				currentSticks[tempStick] = tempStick.get()->GetTime();
 				tempStick.get()->SetFire(coords);
 			}
-			else if ( (coords == tempStick.get()->GetCoords1() && tempStick.get()->GetStatus() == 2 ) 
-				   || (coords == tempStick.get()->GetCoords2() && tempStick.get()->GetStatus() == 1 ) )
+			else if ((coords == tempStick.get()->GetCoords1() && tempStick.get()->GetStatus() == 2)
+				|| (coords == tempStick.get()->GetCoords2() && tempStick.get()->GetStatus() == 1))
 			{
 				tempStick.get()->SetStatus(5);
 			}
