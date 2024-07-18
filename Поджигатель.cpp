@@ -12,7 +12,5 @@ int main()
         figure.GetTime();
     } catch (const char* message) {
         cout << message << endl;
-    } catch (string message) {
-        cout << message << endl;
     }
 }
